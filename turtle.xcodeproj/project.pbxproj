@@ -16,6 +16,10 @@
 		36776C6D28D35C65009A29CF /* turtleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36776C6C28D35C65009A29CF /* turtleTests.swift */; };
 		36776C7728D35C65009A29CF /* turtleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36776C7628D35C65009A29CF /* turtleUITests.swift */; };
 		36776C7928D35C65009A29CF /* turtleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36776C7828D35C65009A29CF /* turtleUITestsLaunchTests.swift */; };
+		36776C8728D363FA009A29CF /* UIColor+Palette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36776C8628D363FA009A29CF /* UIColor+Palette.swift */; };
+		36776C8928D3644A009A29CF /* ProgressBarCustomization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36776C8828D3644A009A29CF /* ProgressBarCustomization.swift */; };
+		36776C8C28D36566009A29CF /* Quantico-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 36776C8B28D36566009A29CF /* Quantico-Bold.ttf */; };
+		36776C8E28D3656F009A29CF /* Quantico-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 36776C8D28D3656F009A29CF /* Quantico-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +53,10 @@
 		36776C7228D35C65009A29CF /* turtleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = turtleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		36776C7628D35C65009A29CF /* turtleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = turtleUITests.swift; sourceTree = "<group>"; };
 		36776C7828D35C65009A29CF /* turtleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = turtleUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		36776C8628D363FA009A29CF /* UIColor+Palette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Palette.swift"; sourceTree = "<group>"; };
+		36776C8828D3644A009A29CF /* ProgressBarCustomization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBarCustomization.swift; sourceTree = "<group>"; };
+		36776C8B28D36566009A29CF /* Quantico-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Quantico-Bold.ttf"; sourceTree = "<group>"; };
+		36776C8D28D3656F009A29CF /* Quantico-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Quantico-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +88,7 @@
 			isa = PBXGroup;
 			children = (
 				36776C5128D35C65009A29CF /* turtle */,
+				36776C8A28D36526009A29CF /* fonts */,
 				36776C6B28D35C65009A29CF /* turtleTests */,
 				36776C7528D35C65009A29CF /* turtleUITests */,
 				36776C5028D35C65009A29CF /* Products */,
@@ -106,6 +115,8 @@
 				36776C6028D35C65009A29CF /* LaunchScreen.storyboard */,
 				36776C6328D35C65009A29CF /* Info.plist */,
 				36776C5B28D35C65009A29CF /* turtle.xcdatamodeld */,
+				36776C8628D363FA009A29CF /* UIColor+Palette.swift */,
+				36776C8828D3644A009A29CF /* ProgressBarCustomization.swift */,
 			);
 			path = turtle;
 			sourceTree = "<group>";
@@ -125,6 +136,15 @@
 				36776C7828D35C65009A29CF /* turtleUITestsLaunchTests.swift */,
 			);
 			path = turtleUITests;
+			sourceTree = "<group>";
+		};
+		36776C8A28D36526009A29CF /* fonts */ = {
+			isa = PBXGroup;
+			children = (
+				36776C8D28D3656F009A29CF /* Quantico-Regular.ttf */,
+				36776C8B28D36566009A29CF /* Quantico-Bold.ttf */,
+			);
+			path = fonts;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -233,6 +253,8 @@
 			files = (
 				36776C6228D35C65009A29CF /* LaunchScreen.storyboard in Resources */,
 				36776C5F28D35C65009A29CF /* Assets.xcassets in Resources */,
+				36776C8C28D36566009A29CF /* Quantico-Bold.ttf in Resources */,
+				36776C8E28D3656F009A29CF /* Quantico-Regular.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -257,10 +279,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				36776C8928D3644A009A29CF /* ProgressBarCustomization.swift in Sources */,
 				36776C5728D35C65009A29CF /* ViewController.swift in Sources */,
 				36776C5328D35C65009A29CF /* AppDelegate.swift in Sources */,
 				36776C5528D35C65009A29CF /* SceneDelegate.swift in Sources */,
 				36776C5D28D35C65009A29CF /* turtle.xcdatamodeld in Sources */,
+				36776C8728D363FA009A29CF /* UIColor+Palette.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
