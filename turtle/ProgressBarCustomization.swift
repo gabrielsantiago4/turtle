@@ -38,6 +38,8 @@ case horizontal
 
 class GradientProgressView: UIProgressView {
     
+   
+    
     @IBInspectable var firstColor: UIColor = UIColor.white {
         didSet {
             updateView()

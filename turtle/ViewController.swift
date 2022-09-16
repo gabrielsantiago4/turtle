@@ -10,7 +10,6 @@ import UIKit
 class ViewController: UIViewController {
     
     var goalInML: Float = 3000
-
     
     var waterDrank: Float = 0 {
         didSet {  //faz algo toda vida que um valor mudar
@@ -34,7 +33,7 @@ class ViewController: UIViewController {
     lazy var gradientBackground: CAGradientLayer = {
         let gradienteLayer = CAGradientLayer()
         gradienteLayer.frame = view.bounds
-        gradienteLayer.colors = [ UIColor.backgroundColor1.cgColor, UIColor.backroundColor2.cgColor]
+        gradienteLayer.colors = [ UIColor(named: "gradientColor1")!.cgColor, UIColor(named: "gradientColor2")!.cgColor]
         gradienteLayer.startPoint = CGPoint(x: 0.5, y: 0)
         gradienteLayer.endPoint = CGPoint(x: 0.5, y: 1.1)
         return gradienteLayer
@@ -103,13 +102,24 @@ class ViewController: UIViewController {
     
     var lakeView =  LakeView()
 
-
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        
+        
+        (self.progressBar as! GradientProgressView).firstColor = UIColor(named: "progressGradient1")!
+        
+        (self.progressBar as! GradientProgressView).secondColor = UIColor(named: "progressGradient2")!
+        self.progressBar.trackTintColor = UIColor(named: "progressTrackColor")
+    
+        
+        self.gradientBackground.colors = [ UIColor(named: "gradientColor1")!.cgColor, UIColor(named: "gradientColor2")!.cgColor]
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         lakeView.loadScene(tipo: .dry)
-        view.backgroundColor = .systemBackground
+        //view.backgroundColor = .black
         
         view.addSubview(lakeView)
         view.addSubview(button250)

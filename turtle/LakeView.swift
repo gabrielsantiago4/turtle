@@ -125,7 +125,13 @@ extension LakeView{
 }
 class LakeView: SCNView {
     
-
+    override func tintColorDidChange() {
+        
+        ///Atualiza no darkMode
+        topLight.light?.color = UIColor(named: "lights")!
+        topLight.light?.shadowColor = UIColor(named: "shadowLights")!
+    }
+    
     static var dori: SCNNode = {
         
         let scene = SCNScene(named: "dori.dae")!
@@ -220,7 +226,7 @@ class LakeView: SCNView {
         return node
     }()
     
-    static var topLight: SCNNode = {
+    var topLight: SCNNode = {
         let topLight = SCNNode()
         topLight.light = SCNLight()
         topLight.light?.type = .directional
@@ -269,6 +275,7 @@ class LakeView: SCNView {
     
     var tipo:Scenario = .dry
 
+
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -283,7 +290,8 @@ class LakeView: SCNView {
         self.tipo = tipo
         let scene = MyScene()
 
-        scene.rootNode.addChildNode(LakeView.topLight)
+        scene.rootNode.addChildNode(self.topLight)
+
         
         tipo.nodes.forEach { node in
             scene.rootNode.addChildNode(node)
@@ -301,6 +309,9 @@ class LakeView: SCNView {
     
         
         config()
+        
+  
+
 
     }
     
