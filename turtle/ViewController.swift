@@ -41,7 +41,7 @@ class ViewController: UIViewController {
     
     lazy var waterCounterHeader: UILabel = {
         let waterCounterHeader = UILabel ()
-        waterCounterHeader.font = UIFont(name: "Quantico-Regular", size: 15.80)
+        waterCounterHeader.font = UIFont(name: "Quantico-Bold", size: 15.80)
         waterCounterHeader.textColor = .counterColor
         waterCounterHeader.text = "Você já bebeu"
         return waterCounterHeader
@@ -58,7 +58,7 @@ class ViewController: UIViewController {
     
     lazy var waterGoal: UILabel = {
         let waterGoal = UILabel()
-        waterGoal.font = UIFont(name: "Quantico-Regular", size: 21)
+        waterGoal.font = UIFont(name: "Quantico-Bold", size: 21)
         waterGoal.textColor = .goalColor
         waterGoal.text = "Sua meta: 3l"
         return waterGoal
@@ -101,6 +101,7 @@ class ViewController: UIViewController {
     }()
     
     var lakeView =  LakeView()
+    var stackHeader = UIStackView()
 
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -121,6 +122,11 @@ class ViewController: UIViewController {
         lakeView.loadScene(tipo: .dry)
         //view.backgroundColor = .black
         
+        stackHeader.addSubview(waterCounterHeader)
+        stackHeader.addSubview(waterCounter)
+        
+        
+        view.addSubview(stackHeader)
         view.addSubview(lakeView)
         view.addSubview(button250)
         view.addSubview(button500)
@@ -146,6 +152,10 @@ class ViewController: UIViewController {
         cloudImage.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
+            
+            stackHeader.topAnchor.constraint(equalTo: view.topAnchor),
+            stackHeader.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            
             lakeView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
             lakeView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
             lakeView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
