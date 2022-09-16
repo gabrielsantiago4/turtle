@@ -84,9 +84,9 @@ class ViewController: UIViewController {
     
     lazy var progressBar: UIProgressView = {
         let progressBar = GradientProgressView(progressViewStyle: .bar)
-        progressBar.trackTintColor = UIColor.progressbarTrack
-        progressBar.firstColor = .progressbarColor1
-        progressBar.secondColor = .progressbarColor2
+        progressBar.trackTintColor = UIColor(named: "progressTrackColor")
+        progressBar.firstColor =  UIColor(named: "progressGradient1")!
+        progressBar.secondColor = UIColor(named: "progressGradient2")!
         progressBar.layer.cornerRadius = 13
         progressBar.layer.sublayers![1].cornerRadius = 13
         progressBar.subviews[1].clipsToBounds = true

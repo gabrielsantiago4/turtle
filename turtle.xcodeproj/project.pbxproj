@@ -36,7 +36,7 @@
 		4EDC66C928D3E65900DFFA52 /* dry-1-texture.png in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66B628D3E65900DFFA52 /* dry-1-texture.png */; };
 		4EDC66CA28D3E65900DFFA52 /* wet-1-texture.png in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66B728D3E65900DFFA52 /* wet-1-texture.png */; };
 		4EDC66CB28D3E65900DFFA52 /* peixeTextura1.png in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66B828D3E65900DFFA52 /* peixeTextura1.png */; };
-		4EDC66CC28D3E65900DFFA52 /* dry-0.dae in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66B928D3E65900DFFA52 /* dry-0.dae */; };
+		4EDC66CC28D3E65900DFFA52 /* dry-0.dae in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66B928D3E65900DFFA52 /* dry-0.dae */; settings = {ATTRIBUTES = ("--compress", ); }; };
 		4EDC66CD28D3E65900DFFA52 /* dori.dae in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66BA28D3E65900DFFA52 /* dori.dae */; };
 		4EDC66CE28D3E65900DFFA52 /* wet-3-texture.png in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66BB28D3E65900DFFA52 /* wet-3-texture.png */; };
 		4EDC66CF28D3E65900DFFA52 /* Imagem0(unica).png in Resources */ = {isa = PBXBuildFile; fileRef = 4EDC66BC28D3E65900DFFA52 /* Imagem0(unica).png */; };
