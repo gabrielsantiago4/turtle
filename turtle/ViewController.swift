@@ -9,12 +9,25 @@ import UIKit
 
 class ViewController: UIViewController {
     
+    var goalInML: Float = 3000
+
     
     var waterDrank: Float = 0 {
         didSet {  //faz algo toda vida que um valor mudar
             
             progressBar.setProgress(waterDrank / 3000, animated: true)
             
+            let mininumML = Float(3000/Scenario.allCases.count + 150)
+            
+            var waterStage = Float(mininumML * lakeView.tipo.position)
+          
+            if(waterDrank/waterStage >= 1 && waterDrank <= goalInML){
+
+                waterStage = Float(mininumML * lakeView.tipo.position)
+                let tipo = Scenario(rawValue: lakeView.tipo.rawValue+1) ?? .dry
+                lakeView.loadScene(tipo: tipo)
+
+                }
         }
     }
     
@@ -87,13 +100,18 @@ class ViewController: UIViewController {
         cloudCounter.image = UIImage(named: "Vector")
         return cloudCounter
     }()
+    
+    var lakeView =  LakeView()
+
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        lakeView.loadScene(tipo: .dry)
         view.backgroundColor = .systemBackground
         
+        view.addSubview(lakeView)
         view.addSubview(button250)
         view.addSubview(button500)
         view.addSubview(progressBar)
@@ -117,6 +135,18 @@ class ViewController: UIViewController {
         progressBar.translatesAutoresizingMaskIntoConstraints = false
         cloudImage.translatesAutoresizingMaskIntoConstraints = false
         
+        NSLayoutConstraint.activate([
+            lakeView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
+            lakeView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
+            lakeView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            lakeView.topAnchor.constraint(equalTo: waterGoal.bottomAnchor, constant: 2)
+       
+//            lakeView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.4),
+//
+//            lakeView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+//            lakeView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+        ])
 
         NSLayoutConstraint.activate([
             waterCounter.centerXAnchor.constraint(equalTo: view.centerXAnchor),
