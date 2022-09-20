@@ -304,9 +304,9 @@ class LakeView: SCNView {
         
         self.scene = scene
         
-        self.scene?.rootNode.opacity = 0
-        self.scene?.rootNode.runAction(SCNAction.fadeOpacity(to: 1, duration: 1.7))
-    
+//        self.scene?.rootNode.opacity = 0
+//        self.scene?.rootNode.runAction(SCNAction.fadeOpacity(to: 1, duration: 1.7))
+//    
         
         config()
         

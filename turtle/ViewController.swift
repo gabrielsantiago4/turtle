@@ -7,26 +7,54 @@
 
 import UIKit
 
+
+
 class ViewController: UIViewController {
     
     var goalInML: Float = 3000
     
+    var changedA: Bool = true
+    var changedB: Bool = true
+    
+    var healthManager = HKStoreManager()
+    var records = Array<(Date, Double)>()
+
+    
     var waterDrank: Float = 0 {
+        
+    
         didSet {  //faz algo toda vida que um valor mudar
             
-            progressBar.setProgress(waterDrank / 3000, animated: true)
-            
-            let mininumML = Float(3000/Scenario.allCases.count + 150)
-            
-            var waterStage = Float(mininumML * lakeView.tipo.position)
-          
-            if(waterDrank/waterStage >= 1 && waterDrank <= goalInML){
+                DispatchQueue.main.async {
+                    self.progressBar.setProgress(self.waterDrank / 3000, animated: true)
+                    let value = self.waterDrank / 1000
+                    self.waterCounter.text = String(format: "%.1fl", value)
+                    
+             
+                    print(self.waterDrank)
+                    
+                    
+                    
+                    if(self.waterDrank >= self.goalInML ){
+                            self.lakeView.loadScene(tipo: .wet3)
+                        
 
-                waterStage = Float(mininumML * lakeView.tipo.position)
-                let tipo = Scenario(rawValue: lakeView.tipo.rawValue+1) ?? .dry
-                lakeView.loadScene(tipo: tipo)
-
+                        }else if(self.waterDrank >= 2250 ){
+                            self.lakeView.loadScene(tipo: .wet2)
+                            
+                            
+                        }else if(self.waterDrank >= 1500){
+                            self.lakeView.loadScene(tipo: .wet1)
+                        }else if(self.waterDrank >= 750 ){
+                            self.lakeView.loadScene(tipo: .dry1)
+                        }
+                    
+                   
+                   
+                    
                 }
+          
+           
         }
     }
     
@@ -115,11 +143,30 @@ class ViewController: UIViewController {
         
         self.gradientBackground.colors = [ UIColor(named: "gradientColor1")!.cgColor, UIColor(named: "gradientColor2")!.cgColor]
     }
-
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+            self.healthManager.createAuthRequest { result, error in
+                print(result ? "Deu certo" : "Não deu certo")
+            }
+        
+        self.healthManager.getRecords { records, error in
+            self.records = records
+            self.waterDrank = Float(records.reduce(0, { partialResult, number in
+                return partialResult + number.1
+            }))
+        }
+    }
+    
+ 
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        lakeView.loadScene(tipo: .dry)
+        
+        
+        //lakeView.loadScene(tipo: .dry)
         //view.backgroundColor = .black
         
         stackHeader.addSubview(waterCounterHeader)
@@ -218,16 +265,14 @@ class ViewController: UIViewController {
     
     @objc func addWater250() {
         self.waterDrank += 250
-        let value = self.waterDrank / 1000
-        self.waterCounter.text = String(format: "%.1fl", value)
+        healthManager.addWaterAmountToHealthKit(ml: 250)
+
         
     }
     
     @objc func addWater500() {
         self.waterDrank += 500
-        let value = self.waterDrank / 1000
-        self.waterCounter.text = String(format: "%.1fl", value)
-
+        healthManager.addWaterAmountToHealthKit(ml: 500)
     }
     
     
