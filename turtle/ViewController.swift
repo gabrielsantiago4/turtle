@@ -147,7 +147,10 @@ class ViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
             self.healthManager.createAuthRequest { result, error in
-                print(result ? "Deu certo" : "Não deu certo")
+                if(error != nil || !result ){
+                    self.dismiss(animated: true)
+                }
+                
             }
         
         self.healthManager.getRecords { records, error in

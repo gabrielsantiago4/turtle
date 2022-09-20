@@ -94,10 +94,13 @@ func getRecords(completion: @escaping ([(Date, Double)], NSError?) -> ()){
 
     let query = HKSampleQuery(sampleType: type!, predicate: predicate, limit: 0, sortDescriptors: nil) { query, results, error in
         let quanitytUnit = HKUnit(from: "ml")
-        let resultsArray = (results as! [HKQuantitySample]).map {
-            ($0.endDate,
-            $0.quantity.doubleValue(for: quanitytUnit))}
-        completion(resultsArray, error as NSError?)
+        if let results = results {
+            let resultsArray = (results as! [HKQuantitySample]).map {
+                ($0.endDate,
+                $0.quantity.doubleValue(for: quanitytUnit))}
+            completion(resultsArray, error as NSError?)
+        }
+        completion([], error as NSError?)
     }
 
     self.healthStore.execute(query)
