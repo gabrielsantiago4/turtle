@@ -22,6 +22,7 @@ class ViewController: UIViewController {
     var records: Array<(Date, Double, [String: Any]?)> = []{
         
         didSet{
+            print(records)
             updateView()
         }
     
@@ -103,7 +104,9 @@ class ViewController: UIViewController {
     
     lazy var backButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(named: "pencil") , for: .normal)
+        
+        button.setImage(UIImage(systemName: "arrowshape.turn.up.backward.fill") , for: .normal)
+        button.tintColor = .white
         button.addTarget(self, action: #selector(ViewController.deleteLastRecord), for: .touchUpInside)
         return button
     }()
@@ -200,7 +203,6 @@ class ViewController: UIViewController {
         view.addSubview(waterGoal)
         view.addSubview(backButton)
         
-        backButton.backgroundColor = .red
 
         view.layer.insertSublayer(gradientBackground, at: 0)
         configureConstraints(stack2: stack2, stack3: stack3)
@@ -333,13 +335,13 @@ class ViewController: UIViewController {
             
             
             healthManager.deleteRecord(registro: lastRecord) { response, i, error  in
-                if let error = error {
-                    print(error)
+                if let _ = error {
+                    self.errorWhenPermissionDenied()
                 }else{
                     print("Deu certo")
                     print(i)
                     
-                    DispatchQueue.main.async {
+                    DispatchQueue.main.async{
                         self.records.remove(at: i)
                     }
                 }

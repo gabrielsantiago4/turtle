@@ -37,9 +37,11 @@ class HKStoreManager {
         
         
         let now = Date()
+        let id = UUID().uuidString
         var meta = [String: Any]()
+        
         meta[HKMetadataKeySyncVersion] = 1
-        meta[HKMetadataKeySyncIdentifier] = UUID().uuidString
+        meta[HKMetadataKeySyncIdentifier] = id
         
       let quantityType = HKQuantityType.quantityType(forIdentifier: .dietaryWater)
       let quanitytUnit = HKUnit(from: "ml")
@@ -47,6 +49,7 @@ class HKStoreManager {
       
 
         let sample = HKQuantitySample(type: quantityType!, quantity: quantityAmount, start: now, end: now, metadata: meta)
+        
       let correlationType = HKObjectType.correlationType(forIdentifier: HKCorrelationTypeIdentifier.food)
       let waterCorrelationForWaterAmount = HKCorrelation(type: correlationType!, start: now, end: now, objects: [sample])
         
@@ -56,9 +59,11 @@ class HKStoreManager {
     }
     
     
+
     func deleteRecord( registro: (Date, Double, [String: Any]?), completion: @escaping (Bool,Int, Error?) -> Void){
         
         let identifier = registro.2?[HKMetadataKeySyncIdentifier]
+        
         let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier, allowedValues: [identifier])
 
         
@@ -66,13 +71,14 @@ class HKStoreManager {
         
         healthStore.deleteObjects(of: type!, predicate: predicate, withCompletion: completion)
         
-
         
     }
     
     func getWeight(completion: @escaping (Double?, NSError?) -> ()){
         let type = HKSampleType.quantityType(forIdentifier: .bodyMass)!
+        
         let agora = Date()
+        
         let predicate = HKQuery.predicateForSamples(withStart: nil , end: agora)
         
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 0, sortDescriptors: nil) { query, results, error in
