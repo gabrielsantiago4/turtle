@@ -19,49 +19,14 @@ class ViewController: UIViewController {
     var healthManager = HKStoreManager()
     var records: Array<(Date, Double)> = []{
         
-        willSet{
-            self.waterDrank = Float(records.reduce(0, { $0 + $1.1}))
+        didSet{
+            updateView()
         }
     
     }
 
     
-    var waterDrank: Float = 0 {
-        
-    
-        didSet {  //faz algo toda vida que um valor mudar
-            
-                DispatchQueue.main.async {
-                    self.progressBar.setProgress(self.waterDrank / 3000, animated: true)
-                    
-                    let value = self.waterDrank / 1000
-                    self.waterCounter.text = String(format: "%.2fl", value)
-                    
-             
-                    print(self.waterDrank)
-                    
-                    
-                    
-                    if(self.waterDrank >= self.goalInML ){
-                            self.lakeView.loadScene(tipo: .wet3)
-
-                        }else if(self.waterDrank >= 2250 ){
-                            self.lakeView.loadScene(tipo: .wet2)
-                            
-                        }else if(self.waterDrank >= 1500){
-                            self.lakeView.loadScene(tipo: .wet1)
-                        }else if(self.waterDrank >= 750 ){
-                            self.lakeView.loadScene(tipo: .dry1)
-                        }
-                    
-                   
-                   
-                    
-                }
-          
-           
-        }
-    }
+    var waterDrank: Float = 0
     
     lazy var gradientBackground: CAGradientLayer = {
         let gradienteLayer = CAGradientLayer()
@@ -144,8 +109,50 @@ class ViewController: UIViewController {
     var lakeView =  LakeView()
     
     
+    
+    func scenarioSlicer(){
+        let countScenarios = Scenario.allCases.count - 1
+        let mininumGoal:Float =  goalInML/Float(countScenarios)
+        
+        var parcela: Float = goalInML
+        
+        if (self.waterDrank > 0){
+            for i in stride(from: countScenarios, to: 0, by: -1){
+                
+                print(self.waterDrank, parcela)
+                print(mininumGoal,parcela,i)
+                
+                if(self.waterDrank >= parcela){
+                    self.lakeView.loadScene(tipo: Scenario(rawValue: i) ?? .dry)
+                    break
+                }
+                parcela -=  mininumGoal
+            }
+        }else{
+            self.lakeView.loadScene(tipo: .dry)
+        }
+        
+    }
+    
+    
   
-
+    func updateView(){
+        DispatchQueue.main.async {
+            
+            self.waterDrank = Float(self.records.reduce(0, { $0 + $1.1}))
+            
+            self.progressBar.setProgress(self.waterDrank / 3000, animated: true)
+            
+            let value = self.waterDrank / 1000
+            self.waterCounter.text = String(format: "%.2fl", value)
+            
+     
+            //print(self.waterDrank)
+            
+            self.scenarioSlicer()
+   
+        }
+    }
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         

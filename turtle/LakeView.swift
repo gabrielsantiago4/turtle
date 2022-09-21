@@ -46,11 +46,11 @@ class MyScene: SCNScene, SCNSceneRendererDelegate {
 
 enum Scenario: Int, CaseIterable{
     
-    case dry = 1
-    case dry1 = 2
-    case wet1 = 3
-    case wet2 = 4
-    case wet3 = 5
+    case dry = 0
+    case dry1 = 1
+    case wet1 = 2
+    case wet2 = 3
+    case wet3 = 4
     
     var position:Float{
         return Float(self.rawValue)
