@@ -16,10 +16,9 @@ class HKSampleTypes {
 
       static var ToGet : Set<HKSampleType> {
         let waterType = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.dietaryWater)!
-        let height = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.height)!
         let weight = HKObjectType.quantityType(forIdentifier: HKQuantityTypeIdentifier.bodyMass)!
 
-        return [waterType, height, weight]
+        return [waterType, weight]
       }
 }
 
@@ -34,7 +33,7 @@ class HKStoreManager {
 
     }
 
-    func addWaterAmountToHealthKit(ml: Double) {
+    func addWaterAmountToHealthKit(ml: Double, completion: @escaping (Date, Bool, Error?) -> Void) {
         
       let quantityType = HKQuantityType.quantityType(forIdentifier: .dietaryWater)
       let quanitytUnit = HKUnit(from: "ml")
@@ -44,16 +43,24 @@ class HKStoreManager {
       let sample = HKQuantitySample(type: quantityType!, quantity: quantityAmount, start: now, end: now)
       let correlationType = HKObjectType.correlationType(forIdentifier: HKCorrelationTypeIdentifier.food)
       let waterCorrelationForWaterAmount = HKCorrelation(type: correlationType!, start: now, end: now, objects: [sample])
-  
         
-      self.healthStore.save(waterCorrelationForWaterAmount, withCompletion: { (success, error) in
-          print(success.description)
-        if (error != nil) {
-          NSLog("error occurred saving water data")
+        self.healthStore.save(waterCorrelationForWaterAmount) { response, error in
+            completion(now, response, error)
         }
-      })
     }
     
+    
+    func deleteRecord( registro: (Date, Double), completion: @escaping (Bool, Error?) -> Void){
+        
+        let type = HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.dietaryWater)
+        let waterQuantity = HKQuantity(unit: HKUnit(from: "ml"), doubleValue: registro.1)
+        let waterBeenDeleted = HKQuantitySample(type: type!, quantity: waterQuantity, start: registro.0, end: registro.0)
+        
+          print("\n to be deleted: \(waterBeenDeleted) \n")
+        
+        healthStore.delete(waterBeenDeleted, withCompletion: completion)
+        
+    }
     
     func getWeight(completion: @escaping (Double?, NSError?) -> ()){
         let type = HKSampleType.quantityType(forIdentifier: .bodyMass)!
@@ -99,8 +106,10 @@ func getRecords(completion: @escaping ([(Date, Double)], NSError?) -> ()){
                 ($0.endDate,
                 $0.quantity.doubleValue(for: quanitytUnit))}
             completion(resultsArray, error as NSError?)
+        }else{
+            completion([], error as NSError?)
         }
-        completion([], error as NSError?)
+        
     }
 
     self.healthStore.execute(query)

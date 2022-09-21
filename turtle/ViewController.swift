@@ -17,7 +17,13 @@ class ViewController: UIViewController {
     var changedB: Bool = true
     
     var healthManager = HKStoreManager()
-    var records = Array<(Date, Double)>()
+    var records: Array<(Date, Double)> = []{
+        
+        willSet{
+            self.waterDrank = Float(records.reduce(0, { $0 + $1.1}))
+        }
+    
+    }
 
     
     var waterDrank: Float = 0 {
@@ -27,8 +33,9 @@ class ViewController: UIViewController {
             
                 DispatchQueue.main.async {
                     self.progressBar.setProgress(self.waterDrank / 3000, animated: true)
+                    
                     let value = self.waterDrank / 1000
-                    self.waterCounter.text = String(format: "%.1fl", value)
+                    self.waterCounter.text = String(format: "%.2fl", value)
                     
              
                     print(self.waterDrank)
@@ -37,11 +44,9 @@ class ViewController: UIViewController {
                     
                     if(self.waterDrank >= self.goalInML ){
                             self.lakeView.loadScene(tipo: .wet3)
-                        
 
                         }else if(self.waterDrank >= 2250 ){
                             self.lakeView.loadScene(tipo: .wet2)
-                            
                             
                         }else if(self.waterDrank >= 1500){
                             self.lakeView.loadScene(tipo: .wet1)
@@ -69,9 +74,9 @@ class ViewController: UIViewController {
     
     lazy var waterCounterHeader: UILabel = {
         let waterCounterHeader = UILabel ()
-        waterCounterHeader.font = UIFont(name: "Quantico-Bold", size: 15.80)
+        waterCounterHeader.font = UIFont(name: "Quantico-Bold", size: 17)
         waterCounterHeader.textColor = .counterColor
-        waterCounterHeader.text = "Você já bebeu"
+        waterCounterHeader.text = "Bebido"
         return waterCounterHeader
         
     }()
@@ -125,11 +130,21 @@ class ViewController: UIViewController {
     lazy var cloudImage: UIImageView = {
         let cloudCounter = UIImageView()
         cloudCounter.image = UIImage(named: "Vector")
+        cloudCounter.translatesAutoresizingMaskIntoConstraints = false
         return cloudCounter
     }()
     
+    lazy var backButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(named: "pencil") , for: .normal)
+        button.addTarget(self, action: #selector(ViewController.deleteLastRecord), for: .touchUpInside)
+        return button
+    }()
+    
     var lakeView =  LakeView()
-    var stackHeader = UIStackView()
+    
+    
+  
 
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -147,135 +162,179 @@ class ViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
             self.healthManager.createAuthRequest { result, error in
-                if(error != nil || !result ){
-                    self.dismiss(animated: true)
-                }
+              
                 
             }
         
         self.healthManager.getRecords { records, error in
-            self.records = records
-            self.waterDrank = Float(records.reduce(0, { partialResult, number in
-                return partialResult + number.1
-            }))
+            
+            if let error = error{
+                print(error)
+            }else{
+                self.records = records
+                print(self.records)
+                self.waterDrank = Float(records.reduce(0, { partialResult, number in
+                    return partialResult + number.1
+                }))
+            }
+           
         }
     }
     
- 
+
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         
+        let (stack2, stack3)  = configureStacks()
         
-        //lakeView.loadScene(tipo: .dry)
-        //view.backgroundColor = .black
-        
-        stackHeader.addSubview(waterCounterHeader)
-        stackHeader.addSubview(waterCounter)
-        
-        
-        view.addSubview(stackHeader)
         view.addSubview(lakeView)
-        view.addSubview(button250)
-        view.addSubview(button500)
         view.addSubview(progressBar)
-        view.addSubview(cloudImage)
-        view.addSubview(waterCounterHeader)
-        view.addSubview(waterCounter)
         view.addSubview(waterGoal)
-        view.layer.insertSublayer(gradientBackground, at: 0)
+        view.addSubview(backButton)
         
-        configureConstraints()
+        backButton.backgroundColor = .red
+
+        view.layer.insertSublayer(gradientBackground, at: 0)
+        configureConstraints(stack2: stack2, stack3: stack3)
         
     }
     
-    func configureConstraints() {
+    func configureConstraints(stack2: UIStackView, stack3: UIStackView) {
         
-        waterGoal.translatesAutoresizingMaskIntoConstraints = false
-        waterCounterHeader.translatesAutoresizingMaskIntoConstraints = false
-        waterCounter.translatesAutoresizingMaskIntoConstraints = false
-        button250.translatesAutoresizingMaskIntoConstraints = false
-        button500.translatesAutoresizingMaskIntoConstraints = false
+        lakeView.translatesAutoresizingMaskIntoConstraints = false
         progressBar.translatesAutoresizingMaskIntoConstraints = false
-        cloudImage.translatesAutoresizingMaskIntoConstraints = false
+        waterGoal.translatesAutoresizingMaskIntoConstraints = false
+        backButton.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             
-            stackHeader.topAnchor.constraint(equalTo: view.topAnchor),
-            stackHeader.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            stack2.widthAnchor.constraint(equalToConstant: 205),
+            stack2.widthAnchor.constraint(equalToConstant: 205),
+            stack2.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+            stack2.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            stack3.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+            stack3.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
+            stack3.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+
+            lakeView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            lakeView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            lakeView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            lakeView.topAnchor.constraint(equalTo: waterGoal.bottomAnchor),
+            lakeView.bottomAnchor.constraint(equalTo: stack3.topAnchor),
             
-            lakeView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.8),
-            lakeView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5),
-            lakeView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            lakeView.topAnchor.constraint(equalTo: waterGoal.bottomAnchor, constant: 2)
-       
-//            lakeView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.4),
-//
-//            lakeView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-//            lakeView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-
-        ])
-
-        NSLayoutConstraint.activate([
-            waterCounter.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            waterCounter.topAnchor.constraint(equalTo: view.topAnchor, constant: 155)
-        ])
-        
-        NSLayoutConstraint.activate([
-            button250.widthAnchor.constraint(equalToConstant: 100),
-            button250.heightAnchor.constraint(equalToConstant: 130),
-            button250.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 52),
-            button250.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50)
-        ])
-        
-        NSLayoutConstraint.activate([
-            button500.widthAnchor.constraint(equalToConstant: 100),
-            button500.heightAnchor.constraint(equalToConstant: 130),
-            button500.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -52),
-            button500.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50)
-        ])
-        
-        NSLayoutConstraint.activate([
             progressBar.widthAnchor.constraint(equalToConstant: 205),
-            progressBar.heightAnchor.constraint(equalToConstant: 25),
+            progressBar.heightAnchor.constraint(equalToConstant: 22),
             progressBar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            progressBar.topAnchor.constraint(equalTo: view.topAnchor, constant: 230)
+            progressBar.topAnchor.constraint(equalTo: stack2.bottomAnchor,constant: 27),
         
-        ])
-        
-        NSLayoutConstraint.activate([
-            cloudImage.widthAnchor.constraint(equalToConstant: 205),
-            cloudImage.heightAnchor.constraint(equalToConstant: 127.35),
-            cloudImage.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 3),
-            cloudImage.topAnchor.constraint(equalTo: view.topAnchor, constant: 90)
-        ])
-        
-        NSLayoutConstraint.activate([
-            waterCounterHeader.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            waterCounterHeader.topAnchor.constraint(equalTo: view.topAnchor, constant: 135)
-        ])
-        
-        NSLayoutConstraint.activate([
             waterGoal.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            waterGoal.topAnchor.constraint(equalTo: view.topAnchor, constant: 265)
+            waterGoal.topAnchor.constraint(equalTo: progressBar.bottomAnchor, constant: 10),
+            
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            backButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
+
+            
         ])
         
     }
+    
+    func configureStacks() -> (UIStackView, UIStackView){
+        let stack = UIStackView(arrangedSubviews: [waterCounter,waterCounterHeader])
+        let stack2 = UIStackView(arrangedSubviews: [cloudImage,stack])
+        let stack3 = UIStackView(arrangedSubviews: [button250, button500])
+                
+        
+        stack .distribution = .fillProportionally
+        stack .alignment = .center
+        
+        stack.axis = .vertical
+        
+        stack2.axis = .vertical
+        stack2.alignment = .center
+        stack2.spacing = -90
+        stack2.translatesAutoresizingMaskIntoConstraints = false
+        
+        
+        stack3.axis = .horizontal
+        stack3.alignment = .center
+        stack3.distribution = .equalSpacing
+        stack3.translatesAutoresizingMaskIntoConstraints = false
+        
+        view.addSubview(stack2)
+        view.addSubview(stack3)
+        
 
+        return (stack2,stack3)
+        
+    }
+
+    
+    func errorWhenPermissionDenied(){
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: "Alert", message: "Adicione as permissões de leitura e escrita da quantidade de água no HealthKit", preferredStyle: UIAlertController.Style.alert)
+            
+     
+            
+            alert.addAction(UIAlertAction(title: "Ok", style: UIAlertAction.Style.default, handler: { _ in
+                
+                guard let settingsURL = URL(string: UIApplication.openSettingsURLString),UIApplication.shared.canOpenURL(settingsURL)
+                           else {
+                            return
+                       }
+
+                       UIApplication.shared.open(settingsURL)
+            
+              
+               
+            }))
+            
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
     
     
     @objc func addWater250() {
-        self.waterDrank += 250
-        healthManager.addWaterAmountToHealthKit(ml: 250)
-
-        
+       
+        healthManager.addWaterAmountToHealthKit(ml: 250){ date, response, error in
+            if let _ = error{
+                self.errorWhenPermissionDenied()
+            }else{
+                self.records.append((date, 250))
+            }
+        }
     }
     
     @objc func addWater500() {
-        self.waterDrank += 500
-        healthManager.addWaterAmountToHealthKit(ml: 500)
+       
+        healthManager.addWaterAmountToHealthKit(ml: 500){ date, response, error in
+            if let _ = error{
+                self.errorWhenPermissionDenied()
+            }else{
+                self.records.append((date, 500))
+            }
+        }
+    }
+    
+    @objc func deleteLastRecord(){
+        
+        print("CLick")
+        
+        if let lastRecord = self.records.last{
+            print(self.records)
+            
+            
+            healthManager.deleteRecord(registro: lastRecord) { response, error in
+                if let error = error {
+                    print(error)
+                }else{
+                    print("Deu certo")
+                }
+            }
+        }
+       
     }
     
     

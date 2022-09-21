@@ -3,14 +3,16 @@
 <plist version="1.0">
 <dict>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string> HKQuantityTypeIdentifierDietaryWater</string>
+	<string>Atualizaremos seu consumo de água diário </string>
+	<key></key>
+	<string></string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Quantico-Bold.ttf</string>
 		<string>Quantico-Regular.ttf</string>
 	</array>
 	<key>NSHealthShareUsageDescription</key>
-	<string>HKQuantityTypeIdentifierDietaryWater</string>
+	<string>Precisamos pegar seu consumo mais recente, bem como sua altura e peso para cálculo da meta</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

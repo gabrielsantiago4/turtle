@@ -148,6 +148,7 @@ class LakeView: SCNView {
         let node = scene.rootNode.childNodes[0]
         node.scale = SCNVector3(x: 0.09, y: 0.09, z: 0.09)
         node.position = SCNVector3(x: 2, y: 2.40, z: -1)
+        
         node.runAction(LakeView.fishAnimationNemo)
         return node
     }()
@@ -289,6 +290,8 @@ class LakeView: SCNView {
         
         self.tipo = tipo
         let scene = MyScene()
+        
+        
 
         scene.rootNode.addChildNode(self.topLight)
 
@@ -303,10 +306,19 @@ class LakeView: SCNView {
         scene.rootNode.eulerAngles = SCNVector3(0.toRadian(), 320.toRadian(),0.toRadian())
         
         self.scene = scene
+        //self.delegate = scene
         
-//        self.scene?.rootNode.opacity = 0
-//        self.scene?.rootNode.runAction(SCNAction.fadeOpacity(to: 1, duration: 1.7))
-//    
+        
+       let sequence =  SCNAction.sequence([
+        SCNAction.rotate(by: CGFloat(-7.toRadian()), around: SCNVector3(0, 1, 0), duration: 0.2),
+        SCNAction.rotate(by: CGFloat(7.toRadian()), around: SCNVector3(0, 1, 0), duration: 0.2),
+        SCNAction.rotate(by: CGFloat(7.toRadian()), around: SCNVector3(0, 1, 0), duration: 0.2),
+        SCNAction.rotate(by: CGFloat(-7.toRadian()), around: SCNVector3(0, 1, 0), duration: 0.2)
+        ])
+        
+        
+        self.scene?.rootNode.runAction(sequence)
+    
         
         config()
         
@@ -314,6 +326,25 @@ class LakeView: SCNView {
 
 
     }
+    
+    
+    
+    @objc func pinchGesture(_ sender: UIPinchGestureRecognizer) {
+          if sender.numberOfTouches == 2 {
+              // Disable zoom
+              print("zoom attempted")
+          }
+      }
+    
+    @objc func hoverGesture(_ sender: UIPanGestureRecognizer) {
+          if sender.numberOfTouches == 2 {
+              // Disable zoom
+              print("zoom attempted")
+          }
+      }
+        
+    // Place these two lines of code where your sceneView is initialize or its properties are set.
+ 
     
     
     func config(){
@@ -327,13 +358,21 @@ class LakeView: SCNView {
         self.defaultCameraController.minimumVerticalAngle = 0
         self.translatesAutoresizingMaskIntoConstraints = false
         self.pointOfView = LakeView.cameraNode
+        
+        var pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(pinchGesture))
+        
+        var hoverRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(hoverGesture))
+        
+        //self.addGestureRecognizer(pinchRecognizer)
+        //self.addGestureRecognizer(hoverRecognizer)
+        
     }
     
     
     init() {
         super.init(frame: .zero, options: [:])
         
-        //self.delegate = scene
+       
         
         loadScene(tipo: .dry)
     
