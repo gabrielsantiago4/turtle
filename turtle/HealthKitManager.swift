@@ -33,32 +33,40 @@ class HKStoreManager {
 
     }
 
-    func addWaterAmountToHealthKit(ml: Double, completion: @escaping (Date, Bool, Error?) -> Void) {
+    func addWaterAmountToHealthKit(ml: Double, completion: @escaping ([String: Any]?, Date, Bool, Error?) -> Void) {
+        
+        
+        let now = Date()
+        var meta = [String: Any]()
+        meta[HKMetadataKeySyncVersion] = 1
+        meta[HKMetadataKeySyncIdentifier] = UUID().uuidString
         
       let quantityType = HKQuantityType.quantityType(forIdentifier: .dietaryWater)
       let quanitytUnit = HKUnit(from: "ml")
-      let quantityAmount = HKQuantity(unit: quanitytUnit, doubleValue: ml)
-      let now = Date()
+        let quantityAmount = HKQuantity(unit: quanitytUnit, doubleValue: ml)
+      
 
-      let sample = HKQuantitySample(type: quantityType!, quantity: quantityAmount, start: now, end: now)
+        let sample = HKQuantitySample(type: quantityType!, quantity: quantityAmount, start: now, end: now, metadata: meta)
       let correlationType = HKObjectType.correlationType(forIdentifier: HKCorrelationTypeIdentifier.food)
       let waterCorrelationForWaterAmount = HKCorrelation(type: correlationType!, start: now, end: now, objects: [sample])
         
         self.healthStore.save(waterCorrelationForWaterAmount) { response, error in
-            completion(now, response, error)
+            completion(meta, now, response, error)
         }
     }
     
     
-    func deleteRecord( registro: (Date, Double), completion: @escaping (Bool, Error?) -> Void){
+    func deleteRecord( registro: (Date, Double, [String: Any]?), completion: @escaping (Bool,Int, Error?) -> Void){
+        
+        let identifier = registro.2?[HKMetadataKeySyncIdentifier]
+        let predicate = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeySyncIdentifier, allowedValues: [identifier])
+
         
         let type = HKQuantityType.quantityType(forIdentifier: HKQuantityTypeIdentifier.dietaryWater)
-        let waterQuantity = HKQuantity(unit: HKUnit(from: "ml"), doubleValue: registro.1)
-        let waterBeenDeleted = HKQuantitySample(type: type!, quantity: waterQuantity, start: registro.0, end: registro.0)
         
-          print("\n to be deleted: \(waterBeenDeleted) \n")
+        healthStore.deleteObjects(of: type!, predicate: predicate, withCompletion: completion)
         
-        healthStore.delete(waterBeenDeleted, withCompletion: completion)
+
         
     }
     
@@ -91,7 +99,7 @@ class HKStoreManager {
     }
     
  
-func getRecords(completion: @escaping ([(Date, Double)], NSError?) -> ()){
+    func getRecords(completion: @escaping ([(Date, Double, [String: Any]?)], NSError?) -> ()){
     let type = HKSampleType.quantityType(forIdentifier: .dietaryWater)
 
     let meiaNoite: Date = Calendar.current.startOfDay(for: .now)
@@ -103,8 +111,15 @@ func getRecords(completion: @escaping ([(Date, Double)], NSError?) -> ()){
         let quanitytUnit = HKUnit(from: "ml")
         if let results = results {
             let resultsArray = (results as! [HKQuantitySample]).map {
-                ($0.endDate,
-                $0.quantity.doubleValue(for: quanitytUnit))}
+
+                (
+                    $0.endDate,
+                    $0.quantity.doubleValue(for: quanitytUnit),
+                    $0.metadata
+                )
+                
+                
+            }
             completion(resultsArray, error as NSError?)
         }else{
             completion([], error as NSError?)

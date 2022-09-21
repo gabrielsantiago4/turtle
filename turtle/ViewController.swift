@@ -17,7 +17,9 @@ class ViewController: UIViewController {
     var changedB: Bool = true
     
     var healthManager = HKStoreManager()
-    var records: Array<(Date, Double)> = []{
+    
+
+    var records: Array<(Date, Double, [String: Any]?)> = []{
         
         didSet{
             updateView()
@@ -118,10 +120,7 @@ class ViewController: UIViewController {
         
         if (self.waterDrank > 0){
             for i in stride(from: countScenarios, to: 0, by: -1){
-                
-                print(self.waterDrank, parcela)
-                print(mininumGoal,parcela,i)
-                
+
                 if(self.waterDrank >= parcela){
                     self.lakeView.loadScene(tipo: Scenario(rawValue: i) ?? .dry)
                     break
@@ -179,7 +178,6 @@ class ViewController: UIViewController {
                 print(error)
             }else{
                 self.records = records
-                print(self.records)
                 self.waterDrank = Float(records.reduce(0, { partialResult, number in
                     return partialResult + number.1
                 }))
@@ -305,24 +303,25 @@ class ViewController: UIViewController {
     
     @objc func addWater250() {
        
-        healthManager.addWaterAmountToHealthKit(ml: 250){ date, response, error in
+        healthManager.addWaterAmountToHealthKit(ml: 250){ meta, date, response, error in
             if let _ = error{
                 self.errorWhenPermissionDenied()
             }else{
-                self.records.append((date, 250))
+                self.records.append((date, 250, meta))
             }
         }
     }
     
     @objc func addWater500() {
        
-        healthManager.addWaterAmountToHealthKit(ml: 500){ date, response, error in
+        healthManager.addWaterAmountToHealthKit(ml: 500){ meta, date, response, error in
             if let _ = error{
                 self.errorWhenPermissionDenied()
             }else{
-                self.records.append((date, 500))
+                self.records.append((date, 5000, meta))
             }
         }
+
     }
     
     @objc func deleteLastRecord(){
@@ -333,11 +332,16 @@ class ViewController: UIViewController {
             print(self.records)
             
             
-            healthManager.deleteRecord(registro: lastRecord) { response, error in
+            healthManager.deleteRecord(registro: lastRecord) { response, i, error  in
                 if let error = error {
                     print(error)
                 }else{
                     print("Deu certo")
+                    print(i)
+                    
+                    DispatchQueue.main.async {
+                        self.records.remove(at: i)
+                    }
                 }
             }
         }
