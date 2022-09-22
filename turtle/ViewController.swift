@@ -6,12 +6,154 @@
 //
 
 import UIKit
+import CoreHaptics
+
+
+class PulseAnimation: CALayer {
+
+    var animationGroup = CAAnimationGroup()
+    var animationDuration: TimeInterval = 1.5
+    var radius: CGFloat = 200
+    var numebrOfPulse: Float = Float.infinity
+    
+    override init(layer: Any) {
+        super.init(layer: layer)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    init(numberOfPulse: Float = Float.infinity, radius: CGFloat, postion: CGPoint){
+        super.init()
+        self.backgroundColor = UIColor.black.cgColor
+        self.contentsScale = UIScreen.main.scale
+        self.opacity = 0
+        self.radius = radius
+        self.numebrOfPulse = numberOfPulse
+        self.position = postion
+        
+        self.bounds = CGRect(x: 0, y: 0, width: radius*2, height: radius*2)
+        self.cornerRadius = radius
+        
+        DispatchQueue.global(qos: .default).async {
+            self.setupAnimationGroup()
+            DispatchQueue.main.async {
+                self.add(self.animationGroup, forKey: "pulse")
+           }
+        }
+    }
+    
+    func scaleAnimation() -> CABasicAnimation {
+        let scaleAnimaton = CABasicAnimation(keyPath: "transform.scale.xy")
+        scaleAnimaton.fromValue = NSNumber(value: 0)
+        scaleAnimaton.toValue = NSNumber(value: 1)
+        scaleAnimaton.duration = animationDuration
+        return scaleAnimaton
+    }
+    
+    func createOpacityAnimation() -> CAKeyframeAnimation {
+        let opacityAnimiation = CAKeyframeAnimation(keyPath: "opacity")
+        opacityAnimiation.duration = animationDuration
+        opacityAnimiation.values = [0.4,0.8,0]
+        opacityAnimiation.keyTimes = [0,0.3,1]
+        return opacityAnimiation
+    }
+    
+    func setupAnimationGroup() {
+        self.animationGroup.duration = animationDuration
+        self.animationGroup.repeatCount = numebrOfPulse
+        let defaultCurve = CAMediaTimingFunction(name: CAMediaTimingFunctionName.default)
+        self.animationGroup.timingFunction = defaultCurve
+        self.animationGroup.animations = [scaleAnimation(),createOpacityAnimation()]
+    }
+    
+    
+}
+
+
+class Haptic{
+    
+    
+    static func buttonWater(){
+        let parameters = [
+          CHHapticEventParameter(
+            parameterID: .hapticIntensity,
+            value: 0.95)
+        ]
+
+        let event = CHHapticEvent(
+          eventType: .hapticTransient,
+          parameters: parameters,
+          relativeTime: 0,
+          duration: 0.04)
+        
+        
+        do{
+            let engine = try CHHapticEngine()
+            try engine.start()
+
+            let pattern = try CHHapticPattern(
+              events: [event],
+              parameters: [])
+            let player = try engine
+              .makePlayer(with: pattern)
+            try player.start(atTime: 0)
+            
+        }catch{
+            
+        }
+        
+    }
+    
+    static func buttonReturn() {
+        let parameters = [
+          CHHapticEventParameter(
+            parameterID: .hapticIntensity,
+            value: 1.00),
+          CHHapticEventParameter(
+            parameterID: .hapticSharpness,
+            value: 1.00),
+        ]
+
+        let event = CHHapticEvent(
+          eventType: .hapticTransient,
+          parameters: parameters,
+          relativeTime: 0,
+          duration: 0.04)
+
+        
+        do{
+            let engine = try CHHapticEngine()
+            try engine.start()
+
+            let pattern = try CHHapticPattern(
+              events: [event],
+              parameters: [])
+            let player = try engine
+              .makePlayer(with: pattern)
+            try player.start(atTime: 0)
+            
+        }catch{
+            
+        }
+       
+        
+    }
+}
 
 
 
 class ViewController: UIViewController {
     
-    var goalInML: Float = 3000
+    var i = 0
+
+    
+    var goalInML: Float = 3000 {
+        didSet{
+            updateView()
+        }
+    }
     
     var changedA: Bool = true
     var changedB: Bool = true
@@ -70,7 +212,7 @@ class ViewController: UIViewController {
         button.setImage(UIImage(named: "glass"), for: .normal)
         button.layer.cornerRadius = 15
         button.layer.masksToBounds = true
-        button.addTarget(self, action: #selector(ViewController.addWater250), for: .touchUpInside)
+       // button.addTarget(self, action: #selector(ViewController.addWater250), for: .touchUpInside)
         return button
     }()
     
@@ -105,9 +247,20 @@ class ViewController: UIViewController {
     lazy var backButton: UIButton = {
         let button = UIButton()
         
-        button.setImage(UIImage(systemName: "arrowshape.turn.up.backward.fill") , for: .normal)
+        
+        let largeConfig = UIImage.SymbolConfiguration(scale: .large)
+        
+        let image = UIImage(systemName: "arrowshape.turn.up.backward.fill", withConfiguration: largeConfig)
+
+        button.setImage(image , for: .normal)
         button.tintColor = .white
+        
+        
         button.addTarget(self, action: #selector(ViewController.deleteLastRecord), for: .touchUpInside)
+        
+//        button.layer.cornerRadius = 20
+//        button.layer.masksToBounds = true
+//        button.backgroundColor = .white
         return button
     }()
     
@@ -141,15 +294,22 @@ class ViewController: UIViewController {
     func updateView(){
         DispatchQueue.main.async {
             
+            self.waterGoal.text = "Sua meta: \(String(format: "%.1f l", self.goalInML/1000))"
+            
             self.waterDrank = Float(self.records.reduce(0, { $0 + $1.1}))
             
-            self.progressBar.setProgress(self.waterDrank / 3000, animated: true)
+            
+            self.progressBar.setProgress(self.waterDrank / self.goalInML, animated: true)
             
             let value = self.waterDrank / 1000
             self.waterCounter.text = String(format: "%.2fl", value)
             
-     
-            //print(self.waterDrank)
+            if(self.waterDrank > 0){
+                self.waterCounterHeader.text = "Bebidos"
+            }else{
+                self.waterCounterHeader.text = "Bebido"
+            }
+            
             
             self.scenarioSlicer()
    
@@ -198,6 +358,7 @@ class ViewController: UIViewController {
         
         let (stack2, stack3)  = configureStacks()
         
+        
         view.addSubview(lakeView)
         view.addSubview(progressBar)
         view.addSubview(waterGoal)
@@ -205,6 +366,17 @@ class ViewController: UIViewController {
         
 
         view.layer.insertSublayer(gradientBackground, at: 0)
+        
+        
+        let gesture: UILongPressGestureRecognizer = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(handleLongPress)
+        )
+        let tapGesture: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTapPress))
+        
+        button250.addGestureRecognizer(gesture)
+        button250.addGestureRecognizer(tapGesture)
+        
         configureConstraints(stack2: stack2, stack3: stack3)
         
     }
@@ -240,9 +412,10 @@ class ViewController: UIViewController {
             waterGoal.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             waterGoal.topAnchor.constraint(equalTo: progressBar.bottomAnchor, constant: 10),
             
-            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            backButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-
+            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+            backButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            backButton.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 0.2),
+            backButton.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 0.2),
             
         ])
         
@@ -267,7 +440,8 @@ class ViewController: UIViewController {
         
         stack3.axis = .horizontal
         stack3.alignment = .center
-        stack3.distribution = .equalSpacing
+        stack3.distribution = .fillEqually
+        stack3.spacing = 50
         stack3.translatesAutoresizingMaskIntoConstraints = false
         
         view.addSubview(stack2)
@@ -286,16 +460,7 @@ class ViewController: UIViewController {
      
             
             alert.addAction(UIAlertAction(title: "Ok", style: UIAlertAction.Style.default, handler: { _ in
-                
-                guard let settingsURL = URL(string: UIApplication.openSettingsURLString),UIApplication.shared.canOpenURL(settingsURL)
-                           else {
-                            return
-                       }
-
-                       UIApplication.shared.open(settingsURL)
-            
-              
-               
+       
             }))
             
             self.present(alert, animated: true, completion: nil)
@@ -303,16 +468,76 @@ class ViewController: UIViewController {
     }
     
     
-    @objc func addWater250() {
-       
-        healthManager.addWaterAmountToHealthKit(ml: 250){ meta, date, response, error in
-            if let _ = error{
-                self.errorWhenPermissionDenied()
-            }else{
-                self.records.append((date, 250, meta))
-            }
+    @objc func handleTapPress(tapGesture: UITapGestureRecognizer) {
+        
+        tapped()
+        shakeAnimate()
+        
+    func shakeAnimate(){
+            let animation = CAKeyframeAnimation()
+            animation.keyPath = "position.x"
+            animation.values = [0, 10, -10, 10, 0]
+            animation.keyTimes = [0, 0.16, 0.5, 0.83, 1]
+            animation.duration = 0.4
+            
+            animation.isAdditive = true
+            button250.layer.add(animation, forKey: "shake")
         }
     }
+    
+    @objc func tapped() {
+
+        switch i {
+        case 1:
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.error)
+            
+        case 2:
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+            
+        case 3:
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.warning)
+            
+        case 4:
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
+            
+        case 5:
+            let generator = UIImpactFeedbackGenerator(style: .medium)
+            generator.impactOccurred()
+            
+        case 6:
+            let generator = UIImpactFeedbackGenerator(style: .heavy)
+            generator.impactOccurred()
+            
+        default:
+            let generator = UISelectionFeedbackGenerator()
+            generator.selectionChanged()
+            i = 0
+        }
+    }
+    
+    @objc func handleLongPress(longPress: UIGestureRecognizer) {
+        if (longPress.state == UIGestureRecognizer.State.began) {
+            // iniciar timer
+        } else if (longPress.state == UIGestureRecognizer.State.ended) {
+            // timer > 3 ? se sim animação : se não faz nada
+            
+            healthManager.addWaterAmountToHealthKit(ml: 250){ meta, date, response, error in
+                if let _ = error{
+                    self.errorWhenPermissionDenied()
+                }else{
+                    Haptic.buttonWater()
+                    self.records.append((date, 250, meta))
+                }
+            }
+        }
+        
+    }
+    
+   
     
     @objc func addWater500() {
        
@@ -320,7 +545,8 @@ class ViewController: UIViewController {
             if let _ = error{
                 self.errorWhenPermissionDenied()
             }else{
-                self.records.append((date, 5000, meta))
+                Haptic.buttonWater()
+                self.records.append((date, 500, meta))
             }
         }
 
@@ -328,22 +554,27 @@ class ViewController: UIViewController {
     
     @objc func deleteLastRecord(){
         
-        print("CLick")
+        
         
         if let lastRecord = self.records.last{
             print(self.records)
             
             
-            healthManager.deleteRecord(registro: lastRecord) { response, i, error  in
+            healthManager.deleteRecord(registro: lastRecord) { response, _ , error  in
                 if let _ = error {
                     self.errorWhenPermissionDenied()
                 }else{
-                    print("Deu certo")
-                    print(i)
                     
-                    DispatchQueue.main.async{
-                        self.records.remove(at: i)
+                    Haptic.buttonReturn()
+                    
+                    DispatchQueue.main.async {
+              
+                            if !self.records.isEmpty{
+                                self.records.removeLast()
+                            }
+                       
                     }
+  
                 }
             }
         }

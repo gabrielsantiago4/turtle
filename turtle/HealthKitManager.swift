@@ -60,7 +60,7 @@ class HKStoreManager {
     
     
 
-    func deleteRecord( registro: (Date, Double, [String: Any]?), completion: @escaping (Bool,Int, Error?) -> Void){
+    func deleteRecord( registro: (Date, Double, [String: Any]?), completion: @escaping (Bool, Int, Error?) -> Void){
         
         let identifier = registro.2?[HKMetadataKeySyncIdentifier]
         
@@ -82,23 +82,42 @@ class HKStoreManager {
         let predicate = HKQuery.predicateForSamples(withStart: nil , end: agora)
         
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 0, sortDescriptors: nil) { query, results, error in
-            let unit = HKUnit(from: "kg")
-            let pesoAtual = (results as! [HKQuantitySample]).last?.quantity.doubleValue(for: unit)
-            completion(pesoAtual, error as NSError?)
+            if let results = results{
+                let unit = HKUnit(from: "kg")
+                let pesoAtual = (results as! [HKQuantitySample]).last?.quantity.doubleValue(for: unit)
+                completion(pesoAtual, error as NSError?)
+                
+            }else{
+                completion(nil, error as NSError?)
+            }
+           
+            
         }
         
         self.healthStore.execute(query)
     }
     
-    func getHeight(completion: @escaping (Double?, NSError?) -> ()){
+    func getHeight(completion: @escaping (Double, NSError?) -> ()){
+        
         let type = HKSampleType.quantityType(forIdentifier: .height)!
         let agora = Date()
+        
         let predicate = HKQuery.predicateForSamples(withStart: nil , end: agora)
         
         let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: 0, sortDescriptors: nil) { query, results, error in
+           
+            
+            if let results =  results as? [HKQuantitySample]{
             let unit = HKUnit(from: "cm")
-            let alturaAtual = (results as! [HKQuantitySample]).last?.quantity.doubleValue(for: unit)
-            completion(alturaAtual, error as NSError?)
+            
+            let alturaAtual = results.last?.quantity.doubleValue(for: unit)
+                
+                completion(alturaAtual ?? 0, error as NSError?)
+                
+            }else{
+                completion(0, error as NSError?)
+            }
+            
         }
         
         self.healthStore.execute(query)

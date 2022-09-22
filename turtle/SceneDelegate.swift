@@ -48,6 +48,26 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             
         }
         
+
+        
+        healthKitStore.getWeight { peso, error  in
+            if let _ = error{
+                
+            }else{
+                if let peso = peso{
+                    rootVC?.goalInML = Float(peso * 35)
+                    
+                }else{
+                    rootVC?.goalInML = 3000
+                }
+                
+                
+            }
+            
+            print(rootVC?.goalInML)
+        }
+    
+        
     }
     
     func sceneWillResignActive(_ scene: UIScene) {
