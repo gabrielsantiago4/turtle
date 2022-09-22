@@ -374,8 +374,17 @@ class ViewController: UIViewController {
         )
         let tapGesture: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTapPress))
         
+        let gesture1: UILongPressGestureRecognizer = UILongPressGestureRecognizer(
+            target: self,
+            action: #selector(handleLongPress)
+        )
+        let tapGesture2: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTapPress))
+        
         button250.addGestureRecognizer(gesture)
         button250.addGestureRecognizer(tapGesture)
+        
+        button500.addGestureRecognizer(gesture1)
+        button500.addGestureRecognizer(tapGesture2)
         
         configureConstraints(stack2: stack2, stack3: stack3)
         
@@ -470,10 +479,9 @@ class ViewController: UIViewController {
     
     @objc func handleTapPress(tapGesture: UITapGestureRecognizer) {
         
-        tapped()
-        shakeAnimate()
+        shakeAnimate(view: tapGesture.view)
         
-    func shakeAnimate(){
+    func shakeAnimate(view:UIView?){
             let animation = CAKeyframeAnimation()
             animation.keyPath = "position.x"
             animation.values = [0, 10, -10, 10, 0]
@@ -481,7 +489,11 @@ class ViewController: UIViewController {
             animation.duration = 0.4
             
             animation.isAdditive = true
-            button250.layer.add(animation, forKey: "shake")
+        
+            if let view = view{
+                view.layer.add(animation, forKey: "shake")
+            }
+            
         }
     }
     
@@ -525,13 +537,28 @@ class ViewController: UIViewController {
         } else if (longPress.state == UIGestureRecognizer.State.ended) {
             // timer > 3 ? se sim animação : se não faz nada
             
-            healthManager.addWaterAmountToHealthKit(ml: 250){ meta, date, response, error in
-                if let _ = error{
-                    self.errorWhenPermissionDenied()
-                }else{
-                    Haptic.buttonWater()
-                    self.records.append((date, 250, meta))
+            
+            
+            if longPress.view == button250{
+                healthManager.addWaterAmountToHealthKit(ml: 250){ meta, date, response, error in
+                    if let _ = error{
+                        self.errorWhenPermissionDenied()
+                    }else{
+                        Haptic.buttonWater()
+                        self.records.append((date, 250, meta))
+                    }
                 }
+
+            }else if longPress.view == button500{
+                healthManager.addWaterAmountToHealthKit(ml: 500){ meta, date, response, error in
+                    if let _ = error{
+                        self.errorWhenPermissionDenied()
+                    }else{
+                        Haptic.buttonWater()
+                        self.records.append((date, 500, meta))
+                    }
+                }
+
             }
         }
         
