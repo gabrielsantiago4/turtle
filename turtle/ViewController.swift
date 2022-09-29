@@ -7,69 +7,10 @@
 
 import UIKit
 import CoreHaptics
+import ARKit
+import WidgetKit
+import SwiftUI
 
-
-class PulseAnimation: CALayer {
-
-    var animationGroup = CAAnimationGroup()
-    var animationDuration: TimeInterval = 1.5
-    var radius: CGFloat = 200
-    var numebrOfPulse: Float = Float.infinity
-    
-    override init(layer: Any) {
-        super.init(layer: layer)
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    init(numberOfPulse: Float = Float.infinity, radius: CGFloat, postion: CGPoint){
-        super.init()
-        self.backgroundColor = UIColor.black.cgColor
-        self.contentsScale = UIScreen.main.scale
-        self.opacity = 0
-        self.radius = radius
-        self.numebrOfPulse = numberOfPulse
-        self.position = postion
-        
-        self.bounds = CGRect(x: 0, y: 0, width: radius*2, height: radius*2)
-        self.cornerRadius = radius
-        
-        DispatchQueue.global(qos: .default).async {
-            self.setupAnimationGroup()
-            DispatchQueue.main.async {
-                self.add(self.animationGroup, forKey: "pulse")
-           }
-        }
-    }
-    
-    func scaleAnimation() -> CABasicAnimation {
-        let scaleAnimaton = CABasicAnimation(keyPath: "transform.scale.xy")
-        scaleAnimaton.fromValue = NSNumber(value: 0)
-        scaleAnimaton.toValue = NSNumber(value: 1)
-        scaleAnimaton.duration = animationDuration
-        return scaleAnimaton
-    }
-    
-    func createOpacityAnimation() -> CAKeyframeAnimation {
-        let opacityAnimiation = CAKeyframeAnimation(keyPath: "opacity")
-        opacityAnimiation.duration = animationDuration
-        opacityAnimiation.values = [0.4,0.8,0]
-        opacityAnimiation.keyTimes = [0,0.3,1]
-        return opacityAnimiation
-    }
-    
-    func setupAnimationGroup() {
-        self.animationGroup.duration = animationDuration
-        self.animationGroup.repeatCount = numebrOfPulse
-        let defaultCurve = CAMediaTimingFunction(name: CAMediaTimingFunctionName.default)
-        self.animationGroup.timingFunction = defaultCurve
-        self.animationGroup.animations = [scaleAnimation(),createOpacityAnimation()]
-    }
-    
-    
-}
 
 
 class Haptic{
@@ -144,34 +85,51 @@ class Haptic{
 
 
 
+
+
 class ViewController: UIViewController {
     
-    var i = 0
-
-    
+    var isLoaded = false
+  
     var goalInML: Float = 3000 {
         didSet{
             updateView()
         }
     }
     
-    var changedA: Bool = true
-    var changedB: Bool = true
-    
+
     var healthManager = HKStoreManager()
     
-
-    var records: Array<(Date, Double, [String: Any]?)> = []{
+  
+    var records: Array<HKWaterRecord> = []{
+        
+        
         
         didSet{
-            print(records)
+            
             updateView()
+
         }
     
     }
 
     
-    var waterDrank: Float = 0
+    var waterDrank: Float = 0 {
+        didSet{
+            
+            DispatchQueue.global(qos: .background).async {
+                let widgetData = WidgetData(waterGoal:  self.goalInML, waterDrank: self.waterDrank)
+                widgetData.ToJson { json, error in
+                    //guard let error else { return }
+                    UserDefaults(suiteName: "group.br.com.turtle")!.set( json!, forKey: "records")
+                }
+                WidgetCenter.shared.reloadTimelines(ofKind: "WaterWidget")
+
+            }
+              
+            
+        }
+    }
     
     lazy var gradientBackground: CAGradientLayer = {
         let gradienteLayer = CAGradientLayer()
@@ -195,7 +153,7 @@ class ViewController: UIViewController {
         let waterCounter = UILabel()
         waterCounter.font = UIFont(name: "Quantico-Bold", size: 39)
         waterCounter.textColor = .counterColor
-        waterCounter.text = "0"
+        waterCounter.text = "0.00"
         return waterCounter
     }()
     
@@ -212,7 +170,7 @@ class ViewController: UIViewController {
         button.setImage(UIImage(named: "glass"), for: .normal)
         button.layer.cornerRadius = 15
         button.layer.masksToBounds = true
-       // button.addTarget(self, action: #selector(ViewController.addWater250), for: .touchUpInside)
+        button.addTarget(self, action: #selector(ViewController.addWater250), for: .touchUpInside)
         return button
     }()
     
@@ -249,8 +207,8 @@ class ViewController: UIViewController {
         
         
         let largeConfig = UIImage.SymbolConfiguration(scale: .large)
-        
-        let image = UIImage(systemName: "arrowshape.turn.up.backward.fill", withConfiguration: largeConfig)
+//        arrowshape.turn.up.backward.fill
+        let image = UIImage(systemName: "gear", withConfiguration: largeConfig)
 
         button.setImage(image , for: .normal)
         button.tintColor = .white
@@ -264,15 +222,38 @@ class ViewController: UIViewController {
         return button
     }()
     
+    
+    lazy var loadingView: UIActivityIndicatorView = {
+        let view = UIActivityIndicatorView(style: .large)
+        view.color = UIColor.white
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.startAnimating()
+        return view
+    }()
+    
+    lazy var blurView: UIVisualEffectView = {
+        let blurEffect = UIBlurEffect(style: UIBlurEffect.Style.dark)
+        let blurEffectView = UIVisualEffectView(effect: blurEffect)
+        blurEffectView.frame = view.bounds
+        blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        return blurEffectView
+    }()
+    
+    
     var lakeView =  LakeView()
-    
-    
+    var notification = NotificationManager()
+ 
+
     
     func scenarioSlicer(){
-        let countScenarios = Scenario.allCases.count - 1
-        let mininumGoal:Float =  goalInML/Float(countScenarios)
         
+
+        
+        let countScenarios = Scenario.allCases.count - 2
+        let mininumGoal:Float =  goalInML/Float(countScenarios)
         var parcela: Float = goalInML
+        
+        
         
         if (self.waterDrank > 0){
             for i in stride(from: countScenarios, to: 0, by: -1){
@@ -283,20 +264,28 @@ class ViewController: UIViewController {
                 }
                 parcela -=  mininumGoal
             }
+            
+            if(self.waterDrank > 1.5*goalInML){
+                self.lakeView.loadScene(tipo: .wet4)
+            }
+            
         }else{
             self.lakeView.loadScene(tipo: .dry)
+//            self.lakeView.accessibilityLabel()
         }
+
+        
         
     }
     
-    
+  
   
     func updateView(){
         DispatchQueue.main.async {
             
             self.waterGoal.text = "Sua meta: \(String(format: "%.1f l", self.goalInML/1000))"
             
-            self.waterDrank = Float(self.records.reduce(0, { $0 + $1.1}))
+            self.waterDrank = Float(self.records.reduce(0, { $0 + $1.sizeML}))
             
             
             self.progressBar.setProgress(self.waterDrank / self.goalInML, animated: true)
@@ -310,6 +299,11 @@ class ViewController: UIViewController {
                 self.waterCounterHeader.text = "Bebido"
             }
             
+            if(self.waterDrank >= self.goalInML){
+                self.notification.removeAllNotifications()
+            }
+               
+
             
             self.scenarioSlicer()
    
@@ -328,66 +322,66 @@ class ViewController: UIViewController {
         self.gradientBackground.colors = [ UIColor(named: "gradientColor1")!.cgColor, UIColor(named: "gradientColor2")!.cgColor]
     }
     
+    
     override func viewWillAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-            self.healthManager.createAuthRequest { result, error in
-              
-                
-            }
+        print("Teste")
+    }
+    
+ 
+    override func viewDidAppear(_ animated: Bool) {
         
-        self.healthManager.getRecords { records, error in
+        
+        self.healthManager.createAuthRequest { result, error in
             
-            if let error = error{
-                print(error)
-            }else{
-                self.records = records
-                self.waterDrank = Float(records.reduce(0, { partialResult, number in
-                    return partialResult + number.1
-                }))
+            DispatchQueue.main.async {
+                self.blurView.isHidden = result
+                self.loadingView.isHidden = result
             }
            
         }
+        
+        self.notification.requestAuthorization()
+        
+        self.notification.getNotications()
+    
+    self.healthManager.getRecords { records, error in
+        
+        if let error = error{
+            print(error)
+        }else{
+            self.records = records
+            self.waterDrank = Float(records.reduce(0, { partialResult, number in
+                return partialResult + number.sizeML
+            }))
+        }
+       
+    }
     }
     
-
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+    
         
         let (stack2, stack3)  = configureStacks()
         
-        
-        view.addSubview(lakeView)
-        view.addSubview(progressBar)
-        view.addSubview(waterGoal)
-        view.addSubview(backButton)
-        
+            
+            view.addSubview(lakeView)
+            view.addSubview(progressBar)
+            view.addSubview(waterGoal)
+            view.addSubview(backButton)
+            view.addSubview(blurView)
+            view.addSubview(loadingView)
 
         view.layer.insertSublayer(gradientBackground, at: 0)
         
-        
-        let gesture: UILongPressGestureRecognizer = UILongPressGestureRecognizer(
-            target: self,
-            action: #selector(handleLongPress)
-        )
-        let tapGesture: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTapPress))
-        
-        let gesture1: UILongPressGestureRecognizer = UILongPressGestureRecognizer(
-            target: self,
-            action: #selector(handleLongPress)
-        )
-        let tapGesture2: UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(handleTapPress))
-        
-        button250.addGestureRecognizer(gesture)
-        button250.addGestureRecognizer(tapGesture)
-        
-        button500.addGestureRecognizer(gesture1)
-        button500.addGestureRecognizer(tapGesture2)
-        
         configureConstraints(stack2: stack2, stack3: stack3)
         
+        //lakeView.session.run(ARWorldTrackingConfiguration())
+
+
     }
     
     func configureConstraints(stack2: UIStackView, stack3: UIStackView) {
@@ -397,36 +391,45 @@ class ViewController: UIViewController {
         waterGoal.translatesAutoresizingMaskIntoConstraints = false
         backButton.translatesAutoresizingMaskIntoConstraints = false
         
-        NSLayoutConstraint.activate([
-            
-            stack2.widthAnchor.constraint(equalToConstant: 205),
-            stack2.widthAnchor.constraint(equalToConstant: 205),
-            stack2.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
-            stack2.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            stack3.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
-            stack3.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
-            stack3.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
-
-            lakeView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
-            lakeView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            lakeView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            lakeView.topAnchor.constraint(equalTo: waterGoal.bottomAnchor),
-            lakeView.bottomAnchor.constraint(equalTo: stack3.topAnchor),
-            
-            progressBar.widthAnchor.constraint(equalToConstant: 205),
-            progressBar.heightAnchor.constraint(equalToConstant: 22),
-            progressBar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            progressBar.topAnchor.constraint(equalTo: stack2.bottomAnchor,constant: 27),
         
-            waterGoal.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            waterGoal.topAnchor.constraint(equalTo: progressBar.bottomAnchor, constant: 10),
+            NSLayoutConstraint.activate([
+                loadingView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                loadingView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+
+                stack2.widthAnchor.constraint(equalToConstant: 205),
+                stack2.widthAnchor.constraint(equalToConstant: 205),
+                stack2.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 30),
+                stack2.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+                stack3.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -30),
+                stack3.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 30),
+                stack3.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -30),
+
+                lakeView.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+                lakeView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+                lakeView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+                lakeView.topAnchor.constraint(equalTo: waterGoal.bottomAnchor),
+                lakeView.bottomAnchor.constraint(equalTo: stack3.topAnchor),
+                
+                progressBar.widthAnchor.constraint(equalToConstant: 205),
+                progressBar.heightAnchor.constraint(equalToConstant: 22),
+                progressBar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                progressBar.topAnchor.constraint(equalTo: stack2.bottomAnchor,constant: 27),
             
-            backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
-            backButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            backButton.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 0.2),
-            backButton.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 0.2),
-            
-        ])
+                waterGoal.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                waterGoal.topAnchor.constraint(equalTo: progressBar.bottomAnchor, constant: 10),
+                
+                backButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 10),
+                backButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+                backButton.widthAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 0.2),
+                backButton.heightAnchor.constraint(equalTo: view.safeAreaLayoutGuide.widthAnchor, multiplier: 0.2),
+                
+   
+
+
+                
+            ])
+       
+      
         
     }
     
@@ -477,134 +480,71 @@ class ViewController: UIViewController {
     }
     
     
-    @objc func handleTapPress(tapGesture: UITapGestureRecognizer) {
-        
-        shakeAnimate(view: tapGesture.view)
-        
-    func shakeAnimate(view:UIView?){
-            let animation = CAKeyframeAnimation()
-            animation.keyPath = "position.x"
-            animation.values = [0, 10, -10, 10, 0]
-            animation.keyTimes = [0, 0.16, 0.5, 0.83, 1]
-            animation.duration = 0.4
-            
-            animation.isAdditive = true
-        
-            if let view = view{
-                view.layer.add(animation, forKey: "shake")
-            }
-            
-        }
-    }
+
+   
     
-    @objc func tapped() {
-
-        switch i {
-        case 1:
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.error)
-            
-        case 2:
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
-            
-        case 3:
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.warning)
-            
-        case 4:
-            let generator = UIImpactFeedbackGenerator(style: .light)
-            generator.impactOccurred()
-            
-        case 5:
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred()
-            
-        case 6:
-            let generator = UIImpactFeedbackGenerator(style: .heavy)
-            generator.impactOccurred()
-            
-        default:
-            let generator = UISelectionFeedbackGenerator()
-            generator.selectionChanged()
-            i = 0
-        }
-    }
-    
-    @objc func handleLongPress(longPress: UIGestureRecognizer) {
-        if (longPress.state == UIGestureRecognizer.State.began) {
-            // iniciar timer
-        } else if (longPress.state == UIGestureRecognizer.State.ended) {
-            // timer > 3 ? se sim animação : se não faz nada
-            
-            
-            
-            if longPress.view == button250{
-                healthManager.addWaterAmountToHealthKit(ml: 250){ meta, date, response, error in
-                    if let _ = error{
-                        self.errorWhenPermissionDenied()
-                    }else{
-                        Haptic.buttonWater()
-                        self.records.append((date, 250, meta))
-                    }
-                }
-
-            }else if longPress.view == button500{
-                healthManager.addWaterAmountToHealthKit(ml: 500){ meta, date, response, error in
-                    if let _ = error{
-                        self.errorWhenPermissionDenied()
-                    }else{
-                        Haptic.buttonWater()
-                        self.records.append((date, 500, meta))
-                    }
-                }
-
-            }
-        }
-        
-    }
     
    
     
     @objc func addWater500() {
+        
+        
+
        
-        healthManager.addWaterAmountToHealthKit(ml: 500){ meta, date, response, error in
+        healthManager.addWaterAmountToHealthKit(ml: 500){ waterRecord, error in
             if let _ = error{
                 self.errorWhenPermissionDenied()
             }else{
                 Haptic.buttonWater()
-                self.records.append((date, 500, meta))
+                self.records.append(waterRecord)
             }
         }
-
+    }
+    
+    @objc func addWater250(){
+        
+        
+       
+    
+        healthManager.addWaterAmountToHealthKit(ml: 250){ waterRecord, error in
+            if let _ = error{
+                self.errorWhenPermissionDenied()
+            }else{
+                Haptic.buttonWater()
+                self.records.append(waterRecord)
+            }
+        }
+       
     }
     
     @objc func deleteLastRecord(){
         
+        let swiftUIController = UIHostingController(rootView: ConfigView(records: records))
+        swiftUIController.modalPresentationStyle = .fullScreen
+        present(swiftUIController, animated: true)
         
-        
-        if let lastRecord = self.records.last{
-            print(self.records)
-            
-            
-            healthManager.deleteRecord(registro: lastRecord) { response, _ , error  in
-                if let _ = error {
-                    self.errorWhenPermissionDenied()
-                }else{
-                    
-                    Haptic.buttonReturn()
-                    
-                    DispatchQueue.main.async {
-              
-                            if !self.records.isEmpty{
-                                self.records.removeLast()
-                            }
-                       
-                    }
-  
-                }
-            }
-        }
+//        if let lastRecord = self.records.last{
+//            print(self.records)
+//
+//
+//            healthManager.deleteRecord(registro: lastRecord) { response, _ , error  in
+//                if let _ = error {
+//                    self.errorWhenPermissionDenied()
+//                }else{
+//
+//                    Haptic.buttonReturn()
+//
+//                    DispatchQueue.main.async {
+//
+//                            if !self.records.isEmpty{
+//                                self.records.removeLast()
+//                            }
+//
+//                    }
+//
+//                }
+//            }
+//        }
        
     }
     

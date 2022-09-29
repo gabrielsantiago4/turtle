@@ -7,6 +7,8 @@
 
 import UIKit
 import SceneKit
+import ARKit
+import RealityKit
 
 extension Int{
     func toRadian() -> Float{
@@ -48,12 +50,33 @@ enum Scenario: Int, CaseIterable{
     
     case dry = 0
     case dry1 = 1
-    case wet1 = 2
-    case wet2 = 3
-    case wet3 = 4
+    case dry11 = 2
+    case wet1 = 3
+    case wet2 = 4
+    case wet3 = 5
+    case wet4 = 6
     
     var position:Float{
         return Float(self.rawValue)
+    }
+    
+    var description: String{
+        switch self{
+        case .dry:
+            return ""
+        case .dry1:
+            return ""
+        case .dry11:
+            return ""
+        case .wet1:
+            return ""
+        case .wet2:
+            return ""
+        case .wet3:
+            return ""
+        case .wet4:
+            return ""
+        }
     }
     
     var nodes: [SCNNode]{
@@ -62,12 +85,16 @@ enum Scenario: Int, CaseIterable{
             return [LakeView.dryScenario]
         case .dry1:
             return [LakeView.dry1Scenario, LakeView.water1Scenario]
+        case .dry11:
+            return [LakeView.dry11Scenario, LakeView.water11Scenario]
         case .wet1:
             return [LakeView.wet1Scenario, LakeView.water2Scenario]
         case .wet2:
             return [LakeView.wet2Scenario, LakeView.water3Scenario,LakeView.nemo]
         case .wet3:
             return [LakeView.wet3Scenario, LakeView.water4Scenario,LakeView.nemo, LakeView.dori]
+        case .wet4:
+            return [LakeView.wet4Scenario, LakeView.water5Scenario,LakeView.nemo]
         }
             
     }
@@ -165,6 +192,12 @@ class LakeView: SCNView {
         return node
     }()
     
+    static  var dry11Scenario: SCNNode = {
+        let scene = SCNScene(named: "dry-11.dae")!
+        let node = scene.rootNode.childNodes[0]
+        return node
+    }()
+    
     static  var wet1Scenario: SCNNode = {
         let scene = SCNScene(named: "wet-1.dae")!
         let node = scene.rootNode.childNodes[0]
@@ -183,13 +216,28 @@ class LakeView: SCNView {
         return node
     }()
     
+    static  var wet4Scenario: SCNNode = {
+        let scene = SCNScene(named: "wet-4.dae")!
+        let node = scene.rootNode.childNodes[0]
+        return node
+    }()
     
-    
+
     
     static  var water1Scenario: SCNNode = {
         let scene = SCNScene(named: "water1")!
         let node = scene.rootNode.childNodes[0]
         node.scale = SCNVector3(x: 0.999, y: 0.999, z: 0.999)
+        node.geometry?.firstMaterial = LakeView.waterMaterial
+        return node
+    }()
+    
+    static  var water11Scenario: SCNNode = {
+        let scene = SCNScene(named: "water11")!
+        let node = scene.rootNode.childNodes[0]
+        node.scale = SCNVector3(x: 0.999, y: 0.999, z: 0.999)
+        node.rotation = SCNVector4(0, 1, 0, 360.toRadian())
+        node.position = SCNVector3(0, 0, 0)
         node.geometry?.firstMaterial = LakeView.waterMaterial
         return node
     }()
@@ -222,6 +270,17 @@ class LakeView: SCNView {
         node.scale = SCNVector3(x: 0.999, y: 0.999, z: 0.999)
         node.rotation = SCNVector4(0, 1, 0, 360.toRadian())
 
+        node.geometry?.firstMaterial = waterMaterial
+     
+        return node
+    }()
+    
+    static  var water5Scenario: SCNNode = {
+        
+        let scene = SCNScene(named: "water5")!
+        let node = scene.rootNode.childNodes[0]
+        node.scale = SCNVector3(x: 0.999, y: 0.999, z: 0.999)
+        node.rotation = SCNVector4(0, 1, 0, 360.toRadian())
         node.geometry?.firstMaterial = waterMaterial
      
         return node
@@ -283,13 +342,15 @@ class LakeView: SCNView {
     }
     
     
-  
+    
+    
    
     
-    func loadScene(tipo:Scenario){
+    func loadScene(tipo:Scenario, isARKIT: Bool = false){
         
         self.tipo = tipo
-        let scene = MyScene()
+        
+        let scene =  MyScene()
         
         
 
@@ -310,6 +371,7 @@ class LakeView: SCNView {
         
         
        let sequence =  SCNAction.sequence([
+ 
         SCNAction.rotate(by: CGFloat(-7.toRadian()), around: SCNVector3(0, 1, 0), duration: 0.2),
         SCNAction.rotate(by: CGFloat(7.toRadian()), around: SCNVector3(0, 1, 0), duration: 0.2),
         SCNAction.rotate(by: CGFloat(7.toRadian()), around: SCNVector3(0, 1, 0), duration: 0.2),
@@ -318,14 +380,13 @@ class LakeView: SCNView {
         
         
         self.scene?.rootNode.runAction(sequence)
-    
         
+ 
         config()
-        
-  
-
 
     }
+    
+   
     
     
     
@@ -359,9 +420,10 @@ class LakeView: SCNView {
         self.translatesAutoresizingMaskIntoConstraints = false
         self.pointOfView = LakeView.cameraNode
         
-        var pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(pinchGesture))
         
-        var hoverRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(hoverGesture))
+//        var pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(pinchGesture))
+//
+//        var hoverRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(hoverGesture))
         
         //self.addGestureRecognizer(pinchRecognizer)
         //self.addGestureRecognizer(hoverRecognizer)
